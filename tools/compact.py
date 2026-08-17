@@ -59,31 +59,46 @@ DST = DATA / "gold_events_v2"
 
 def main() -> int:
     con = duckdb.connect()
+    con.execute("set threads to 1")
 
-    n_src = len(list(SRC.glob("*.parquet")))
-    print(f"  nguồn : {SRC}  ({n_src:,} file)")
+    src_glob = (SRC / "*.parquet").as_posix()
+    dst_path = DST.as_posix()
+    dst_glob = (DST / "**" / "*.parquet").as_posix()
 
-    # TODO(nhiệm vụ 4): hiện thực khung COPY ... TO ... ở phần docstring.
-    #
-    #   con.execute(f"""
-    #       copy (
-    #           select * from read_parquet('{SRC}/*.parquet')
-    #           order by ...
-    #       ) to '{DST}' (
-    #           format parquet,
-    #           partition_by (...),
-    #           overwrite_or_ignore,
-    #           row_group_size ...
-    #       )
-    #   """)
-    #
-    # Sau đó kiểm tra không mất hàng nào:
-    #
-    #   assert <số row dataset cũ> == <số row dataset mới>
+    src_files = len(list(SRC.glob("*.parquet")))
+    if src_files == 0:
+        raise SystemExit("không tìm thấy dữ liệu nguồn — chạy `make seed-extra` trước")
 
-    print("\n  tools/compact.py chưa được hiện thực — đây là nhiệm vụ 4.")
-    print("  Mở file này, đọc phần KHUNG THỰC HIỆN ở đầu file và điền vào TODO.")
-    print("  Hướng dẫn từng bước: GUIDE.md mục 4.\n")
+    rows_before = con.execute(
+        f"select count(*) from read_parquet('{src_glob}')"
+    ).fetchone()[0]
+    print(f"  nguồn : {SRC}  ({src_files:,} file, {rows_before:,} hàng)")
+
+    con.execute(f"""
+        copy (
+            select *
+            from read_parquet('{src_glob}')
+            order by event_date, customer_name, event_time
+        ) to '{dst_path}' (
+            format parquet,
+            partition_by (event_date),
+            overwrite_or_ignore,
+            row_group_size 2048
+        )
+    """)
+
+    rows_after = con.execute(f"""
+        select count(*)
+        from read_parquet('{dst_glob}', hive_partitioning = true)
+    """).fetchone()[0]
+    assert rows_before == rows_after, (
+        f"mất dữ liệu khi compact: trước={rows_before:,}, sau={rows_after:,}"
+    )
+
+    dst_files = len(list(DST.rglob("*.parquet")))
+    print(f"  đích  : {DST}  ({dst_files:,} file, {rows_after:,} hàng)")
+    print("  kiểm tra số hàng: đạt\n")
+    con.close()
     return 0
 
 

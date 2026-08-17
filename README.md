@@ -128,6 +128,7 @@ không. Một bảng có thể **ổn định nhưng vẫn sai** — xem `gold_f
 > lại nhiều thêm. Không thấy báo lỗi gì cả."
 
 **Cần thu thập trước khi sửa**
+
 - Chạy `make pipeline` hai lần, đếm số hàng sau mỗi lần
 - Đọc khối `KHUNG THỰC HIỆN` và `config()` trong
   `dbt/models/gold/gold_training_set.sql`
@@ -136,6 +137,7 @@ không. Một bảng có thể **ổn định nhưng vẫn sai** — xem `gold_f
   trở nên rủi ro?
 
 **Tiêu chí đạt**
+
 - `make verify` báo `ỔN ĐỊNH ✓` cho `gold_training_set`
 - Số hàng bằng `expected/gold_training_set.count`
 - Chạy thêm lượt thứ tư, thứ năm vẫn không đổi
@@ -148,6 +150,7 @@ không. Một bảng có thể **ổn định nhưng vẫn sai** — xem `gold_f
 > thủ công. Kỳ lạ là chỉ thiếu ở những ngày đã chạy xong từ lâu, ngày mới thì đủ."
 
 **Cần thu thập trước khi sửa**
+
 - Đo hiệu số giữa `_ingested_at` và `event_time` trong Bronze. Phân bố ra sao?
   **P99 bằng bao nhiêu?**
 - Đọc điều kiện lọc trong khối `is_incremental()` của `gold_feature_daily.sql`.
@@ -156,6 +159,7 @@ không. Một bảng có thể **ổn định nhưng vẫn sai** — xem `gold_f
   lượt chạy nào?
 
 **Tiêu chí đạt**
+
 - Số hàng khớp `expected/gold_feature_daily.count`
 - Báo cáo nêu rõ **giá trị P99 đo được** và lookback được chọn dựa trên giá trị đó
 - Vẫn `ỔN ĐỊNH ✓` — thay đổi ở nhiệm vụ 2 không được làm hỏng nhiệm vụ 1
@@ -169,6 +173,7 @@ không. Một bảng có thể **ổn định nhưng vẫn sai** — xem `gold_f
 > loại từ hôm đó dự đoán kém hẳn."
 
 **Cần thu thập trước khi sửa**
+
 - `select priority, count(*) from silver_tickets group by 1` — bất thường nằm ở đâu?
 - Đối chiếu với `select priority_raw, count(*) from bronze_tickets_cdc group by 1`
 - Mở `dbt/models/silver/schema.yml` — `contract` đang ở trạng thái nào?
@@ -177,6 +182,7 @@ không. Một bảng có thể **ổn định nhưng vẫn sai** — xem `gold_f
   lỗi không?
 
 **Tiêu chí đạt**
+
 - `contract` được bật, `dbt test` pass
 - `quarantine_tickets` chứa **đúng** những bản ghi sai kiểu, số hàng khớp
   `expected/quarantine_tickets.count`
@@ -206,13 +212,13 @@ consumer bị kill giữa batch (delivery semantics).
 
 Thang 100 điểm, chi tiết trong [RUBRIC.md](RUBRIC.md).
 
-| Tiêu chí | Điểm |
-|---|---|
-| Ba lượt chạy cho checksum giống hệt nhau | 30 |
-| Số hàng các bảng Gold khớp `expected/` | 30 |
-| `contract` bật, `dbt test` pass, `quarantine_tickets` đúng | 20 |
-| Báo cáo nêu đúng **nguyên nhân**, không chỉ mô tả cách khắc phục | 20 |
-| *(thưởng)* mỗi bài trong [EXTRA.md](EXTRA.md) | +5 |
+| Tiêu chí                                                                          | Điểm |
+| ----------------------------------------------------------------------------------- | ------ |
+| Ba lượt chạy cho checksum giống hệt nhau                                       | 30     |
+| Số hàng các bảng Gold khớp`expected/`                                        | 30     |
+| `contract` bật, `dbt test` pass, `quarantine_tickets` đúng                 | 20     |
+| Báo cáo nêu đúng**nguyên nhân**, không chỉ mô tả cách khắc phục | 20     |
+| *(thưởng)* mỗi bài trong [EXTRA.md](EXTRA.md)                                  | +5     |
 
 > Khắc phục đúng nhưng không giải thích được cơ chế sẽ mất 20 điểm cuối. Trong
 > môi trường vận hành, phần giải thích là yếu tố ngăn lỗi tái diễn.
